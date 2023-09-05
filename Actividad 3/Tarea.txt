@@ -29,3 +29,71 @@ CREATE TABLE Suministros (
     cantidad INT,
     fecha DATE
 );
+
+
+
+Ejercicio 2
+
+/* Tabla Marcas */
+CREATE TABLE Marcas (
+    marca_id SERIAL PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL
+);
+/* Tabla Modelos */
+CREATE TABLE Modelos (
+   modelo_id SERIAL PRIMARY KEY,
+   nombre VARCHAR(55) NOT NULL,
+   marca_id INT REFERENCES Marcas(marca_id),
+   precio DECIMAL(10, 2),
+   descuento DECIMAL(10, 2),
+   potencia DECIMAL(6, 2),
+   cilindrada DECIMAL(6, 2)
+);
+/* Tabla Equipamiento */
+CREATE TABLE Equipamiento (
+    equipamiento_id SERIAL PRIMARY KEY,
+    nombre VARCHAR(55) NOT NULL,
+    es_extra BOOLEAN,
+    precio_extra DECIMAL(10, 2)
+);
+/* Tabla Modelos_Equipamiento */
+CREATE TABLE Modelos_Equipamiento (
+    modelo_id INT,
+    equipamiento_id INT,
+    PRIMARY KEY (modelo_id, equipamiento_id),
+    FOREIGN KEY (modelo_id) REFERENCES Modelos(modelo_id),
+    FOREIGN KEY (equipamiento_id) REFERENCES Equipamiento(equipamiento_id)
+);
+/* Tabla Automoviles */
+CREATE TABLE Automoviles (
+    bastidor VARCHAR(55) PRIMARY KEY,
+    modelo_id INT REFERENCES Modelos(modelo_id),
+    numero_stock BOOLEAN,
+    ubicacion VARCHAR(55)
+);
+/* Tabla Servicios_Oficiales */
+CREATE TABLE Servicios_Oficiales (
+    servicio_oficial_id SERIAL PRIMARY KEY,
+    nombre VARCHAR(55) NOT NULL,
+    domicilio VARCHAR(55) NOT NULL,
+    INE VARCHAR(55) NOT NULL
+);
+/* Tabla Vendedores */
+CREATE TABLE Vendedores (
+    INE VARCHAR(55) PRIMARY KEY,
+    nombre VARCHAR(55) NOT NULL,
+    domicilio VARCHAR(55) NOT NULL
+);
+/* Tabla Ventas */
+CREATE TABLE Ventas (
+    venta_id SERIAL PRIMARY KEY,
+    automovil_bastidor VARCHAR(55) REFERENCES Automoviles(bastidor),
+    vendedor_INE VARCHAR(55) REFERENCES Vendedores(INE),
+    servicio_oficial_id INT REFERENCES Servicios_Oficiales(servicio_oficial_id),
+    precio DECIMAL(10, 2),
+    modo_pago VARCHAR(50),
+    fecha_entrega DATE,
+    matricula VARCHAR(20),
+    FOREIGN KEY (automovil_bastidor) REFERENCES Automoviles(bastidor)
+);
+
