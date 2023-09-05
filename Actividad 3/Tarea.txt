@@ -1,1 +1,31 @@
-Pendiente
+Ejercicio 1
+/* Tabla proveedores */
+CREATE TABLE Proveedores (
+    proveedor_id SERIAL PRIMARY KEY,
+    nombre VARCHAR(55),
+    direccion VARCHAR(55),
+    ciudad VARCHAR(55),
+    provincia VARCHAR(55)
+);
+/* Tabla categorias */
+CREATE TABLE Categorias (
+    categoria_id SERIAL PRIMARY KEY,
+    nombre VARCHAR(55)
+);
+/* Tabla piezas */
+CREATE TABLE Piezas (
+    pieza_id SERIAL PRIMARY KEY,
+    codigo VARCHAR(55) UNIQUE,
+    nombre VARCHAR(55),
+    color VARCHAR(55),
+    precio DECIMAL(10, 2),
+    categoria_id INT REFERENCES Categorias(categoria_id)
+);
+/* Tabla suministros */
+CREATE TABLE Suministros (
+    suministro_id SERIAL PRIMARY KEY,
+    proveedor_id INT REFERENCES Proveedores(proveedor_id),
+    pieza_id INT REFERENCES Piezas(pieza_id),
+    cantidad INT,
+    fecha DATE
+);
