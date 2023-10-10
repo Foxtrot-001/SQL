@@ -1,0 +1,138 @@
+-- Crear tabla Productos
+CREATE TABLE Productos (
+    ProductoID serial PRIMARY KEY,
+    Nombre varchar(255),
+    Descripcion text,
+    Precio numeric(10, 2),
+    SKU text
+);
+
+-- Crear tabla Clientes
+CREATE TABLE Clientes (
+    ClienteID serial PRIMARY KEY,
+    Nombre varchar(55),
+    Apellidos varchar(55),
+    Email varchar(55),
+    Telefono varchar(15),
+    Direccion varchar(55),
+    CodigoPostal varchar(10),
+    BarrioColonia varchar(55)
+);
+-- Crear tabla Ventas
+CREATE TABLE Ventas (
+    VentaID serial PRIMARY KEY,
+    ClienteID integer REFERENCES Clientes(ClienteID),
+    Fecha date
+);
+-- Crear tabla DetallesVenta
+CREATE TABLE DetallesVenta (
+    DetalleVentaID serial PRIMARY KEY,
+    VentaID integer REFERENCES Ventas(VentaID),
+    ProductoID integer REFERENCES Productos(ProductoID)
+);
+
+-- Poblando base de datos
+INSERT INTO Productos (Nombre, Descripcion, Precio, SKU) VALUES
+    ('Arroz', 'Arroz blanco de 1kg', 12.50, 'ARZ001'),
+    ('Frijoles', 'Frijoles negros de 500g', 8.75, 'FRJ001'),
+    ('Aceite de cocina', 'Aceite de cocina vegetal de 1L', 15.90, 'ACE001');
+
+INSERT INTO Clientes (Nombre, Apellidos, Email, Telefono, Direccion, CodigoPostal, BarrioColonia) VALUES
+    ('Juan', 'Lopez', 'juan.lopez@email.com', '555-123-4567', 'Calle 123', '12345', 'Monterrey'),
+    ('Maria', 'Gomez', 'maria.gomez@email.com', '555-987-6543', 'Calle 456', '54321', 'Cancún');
+
+INSERT INTO Ventas (ClienteID, Fecha) VALUES
+    (1, '2023-09-01'),
+    (2, '2023-09-02');
+
+INSERT INTO DetallesVenta (VentaID, ProductoID) VALUES
+    (1, 1),
+    (1, 2),
+    (2, 3);
+
+--Consultas (querys)
+--ID de los clientes de la Ciudad de Monterrey
+SELECT ClienteID
+FROM Clientes
+WHERE BarrioColonia = 'Monterrey';
+
+--ID y descripción de los productos que cuesten menos de 15 pesos
+SELECT ProductoID, Nombre
+FROM Productos
+WHERE Precio < 15;
+
+--ID y nombre de los clientes, cantidad vendida, y descripción del producto, en las ventas en las cuales se vendieron más de 10 unidades.
+SELECT C.ClienteID, C.Nombre AS ClienteNombre, DV.ProductoID, P.Nombre AS ProductoNombre, COUNT(*) AS CantidadVendida
+FROM Clientes C
+JOIN Ventas V ON C.ClienteID = V.ClienteID
+JOIN DetallesVenta DV ON V.VentaID = DV.VentaID
+JOIN Productos P ON DV.ProductoID = P.ProductoID
+GROUP BY C.ClienteID, C.Nombre, DV.ProductoID, P.Nombre
+HAVING COUNT(*) > 10;
+
+--ID y nombre de los clientes que no aparecen en la tabla de ventas (Clientes que no han comprado productos)
+SELECT ClienteID, Nombre
+FROM Clientes
+WHERE ClienteID NOT IN (SELECT DISTINCT ClienteID FROM Ventas);
+
+--ID y nombre de los clientes que han comprado todos los productos de la empresa.
+SELECT C.ClienteID, C.Nombre
+FROM Clientes C
+WHERE NOT EXISTS (
+    SELECT P.ProductoID
+    FROM Productos P
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM DetallesVenta DV
+        JOIN Ventas V ON DV.VentaID = V.VentaID
+        WHERE V.ClienteID = C.ClienteID AND DV.ProductoID = P.ProductoID
+    )
+);
+
+--ID y nombre de cada cliente y la suma total (suma de cantidad) de los productos que ha comprado. Pista: (https://www.postgresqltutorial.com/postgresql-sum-function/).
+SELECT C.ClienteID, C.Nombre, SUM(1) AS SumaTotalProductos
+FROM Clientes C
+JOIN Ventas V ON C.ClienteID = V.ClienteID
+JOIN DetallesVenta DV ON V.VentaID = DV.VentaID
+GROUP BY C.ClienteID, C.Nombre;
+
+--ID de los productos que no han sido comprados por clientes de Guadalajara.
+SELECT P.ProductoID
+FROM Productos P
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM DetallesVenta DV
+    JOIN Ventas V ON DV.VentaID = V.VentaID
+    JOIN Clientes C ON V.ClienteID = C.ClienteID
+    WHERE C.BarrioColonia = 'Guadalajara' AND DV.ProductoID = P.ProductoID
+);
+
+--ID de los productos que se han vendido a clientes de Monterrey y que también se han vendido a clientes de Cancún.
+SELECT DV.ProductoID
+FROM DetallesVenta DV
+JOIN Ventas V ON DV.VentaID = V.VentaID
+JOIN Clientes C ON V.ClienteID = C.ClienteID
+WHERE C.BarrioColonia = 'Monterrey'
+INTERSECT
+SELECT DV.ProductoID
+FROM DetallesVenta DV
+JOIN Ventas V ON DV.VentaID = V.VentaID
+JOIN Clientes C ON V.ClienteID = C.ClienteID
+WHERE C.BarrioColonia = 'Cancún';
+
+--Nombre de las ciudades en las que se han vendido todos los productos.
+SELECT C.BarrioColonia AS Ciudad
+FROM Clientes C
+WHERE NOT EXISTS (
+    SELECT P.ProductoID
+    FROM Productos P
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM DetallesVenta DV
+        JOIN Ventas V ON DV.VentaID = V.VentaID
+        WHERE V.ClienteID = C.ClienteID AND DV.ProductoID = P.ProductoID
+    )
+)
+GROUP BY C.BarrioColonia;
+
+
